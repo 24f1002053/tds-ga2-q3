@@ -18,26 +18,27 @@ async def health_check():
 
 @app.get("/effective-config")
 async def get_effective_config(set: list[str] = []):
-    # 1. Defaults
+    # 1. Defaults (Lowest)
     config = {"port": 8000, "workers": 1, "debug": False, "log_level": "info", "api_key": "default-secret-000"}
     
-    # 2. YAML (config.development.yaml)
+    # 2. YAML (Overwrites defaults)
     if os.path.exists("config.development.yaml"):
         with open("config.development.yaml") as f:
             yaml_config = yaml.safe_load(f) or {}
             config.update(yaml_config)
             
-    # 3. .env (and Alias NUM_WORKERS -> workers)
+    # 3. .env (Overwrites YAML)
     config["workers"] = int(os.getenv("NUM_WORKERS", config["workers"]))
     if os.getenv("APP_PORT"): config["port"] = int(os.getenv("APP_PORT"))
     if os.getenv("APP_LOG_LEVEL"): config["log_level"] = os.getenv("APP_LOG_LEVEL")
     
-    # 4. OS Env (APP_ prefix)
+    # 4. OS Env (Highest non-CLI layer)
+    # This must be the LAST step before CLI, so it overwrites everything above
     if os.getenv("APP_PORT"): config["port"] = int(os.getenv("APP_PORT"))
     if os.getenv("APP_WORKERS"): config["workers"] = int(os.getenv("APP_WORKERS"))
     if os.getenv("APP_API_KEY"): config["api_key"] = os.getenv("APP_API_KEY")
     
-    # 5. CLI Overrides (?set=key=value)
+    # 5. CLI Overrides (The absolute highest)
     for s in set:
         k, v = s.split("=")
         if k in ["port", "workers"]: config[k] = int(v)
