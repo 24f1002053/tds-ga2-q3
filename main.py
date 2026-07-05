@@ -12,6 +12,10 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 def str_to_bool(val):
     return str(val).lower() in ("true", "1", "yes", "on")
 
+@app.get("/healthz")
+async def health_check():
+    return {"status": "ok", "redis": "up"}
+
 @app.get("/effective-config")
 async def get_effective_config(set: list[str] = []):
     # 1. Defaults
