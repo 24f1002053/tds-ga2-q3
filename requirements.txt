@@ -1,4 +1,4 @@
 fastapi
 uvicorn
 pyyaml 
-python-doten
+python-dotenv
